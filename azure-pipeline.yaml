@@ -1,0 +1,37 @@
+trigger:
+  - main  # or your branch name
+
+pool:
+  name: Videostream-self-hosted-agentpool # ✅ Your self-hosted agent name
+
+steps:
+  # Step 1: Install dependencies
+  - task: Npm@1
+    displayName: 'Install Dependencies'
+    inputs:
+      command: 'install'
+
+  # Step 2: Run build
+  - task: Npm@1
+    displayName: 'npm build'
+    inputs:
+      command: 'custom'
+      customCommand: 'run build'
+
+ # Step 3: Publish build artifacts
+  - task: PublishBuildArtifacts@1
+    displayName: 'Publish Artifact: drop'
+    inputs:
+      targetPath: '$(Build.SourcesDirectory)/dist'
+      artifact: 'pulse-video-dist'
+      publishLocation: 'pipeline'
+
+  # Step 4: Deploy to Azure Web App on Linux
+  - task: AzureWebApp@1
+    displayName: 'Deploy to Azure Web App'
+    inputs:
+      azureSubscription: 'videostreamsc'  # Replace with your Azure DevOps service connection
+      appType: 'webAppLinux'
+      appName: 'Videostreamapp'                   # Replace with your Azure Web App name
+      package: '$(Build.SourcesDirectory)/dist'
+      runtimeStack: 'STATICSITE|1.0'
